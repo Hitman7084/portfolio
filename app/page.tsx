@@ -1,12 +1,9 @@
-import './globals.css';
+import Image from "next/image";
 
-const HomePage = () => {
+export default function Home() {
   return (
-    <div className='font-bold'>
-      <h1>Welcome to My Portfolio</h1>
-      <p>This is the home page.</p>
+    <div>
+      <h1>Noice</h1>
     </div>
   );
 }
-
-export default HomePage;
