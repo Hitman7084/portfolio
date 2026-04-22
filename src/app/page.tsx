@@ -1,9 +1,7 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex">
-      
-    </div>
+    <main className="relative">
+      {/* Sections will be added here */}
+    </main>
   );
 }
