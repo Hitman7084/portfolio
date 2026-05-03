@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
+import SmoothScroll from "@/components/SmoothScroll";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Portfolio",
-  description: "A cinematic, motion-first portfolio.",
+  description: "Creative developer portfolio",
 };
 
 export default function RootLayout({
@@ -23,12 +21,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
-    >
-      <body className="bg-[#0a0a0a] text-white min-h-screen overflow-x-hidden">
-        {children}
+    <html lang="en" className={inter.variable}>
+      <body className="bg-[#0a0a0a] text-white antialiased">
+        <SmoothScroll>
+          <header>
+            <Navbar />
+          </header>
+          <main>{children}</main>
+          <footer className="py-8 border-t border-white/10 text-center text-sm text-white/40">
+            <div className="container">
+              © 2026 &middot; Built with Next.js &amp; GSAP
+            </div>
+          </footer>
+        </SmoothScroll>
       </body>
     </html>
   );

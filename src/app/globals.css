@@ -1,42 +1,55 @@
 @import "tailwindcss";
 
-:root {
-  --bg: #0a0a0a;
-  --fg: #ededed;
-  --fg-muted: #888888;
-  --accent: #7c3aed;
-  --accent-light: #a78bfa;
-  --accent-glow: rgba(124, 58, 237, 0.35);
-}
-
-@theme inline {
-  --color-background: var(--bg);
-  --color-foreground: var(--fg);
-  --color-accent: var(--accent);
-  --color-accent-light: var(--accent-light);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-html {
-  scroll-behavior: smooth;
-  background-color: var(--bg);
-  overflow-x: hidden;
-}
-
+/* ─── Font rendering ─────────────────────────────────────────────────────── */
 body {
-  background-color: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-sans), system-ui, sans-serif;
-  overflow-x: hidden;
+  font-family: var(--font-inter), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Respect reduced-motion preference — disable scroll-behavior and GSAP
-   will also be guarded by gsap.matchMedia() where needed. */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+/* ─── Disable native smooth scroll (Lenis handles it) ───────────────────── */
+html {
+  scroll-behavior: auto;
+}
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+/* ─── Custom text selection ─────────────────────────────────────────────── */
+::selection {
+  background-color: #7c3aed;
+  color: #ffffff;
+}
+
+/* ─── Grain / noise overlay ─────────────────────────────────────────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ─── Utility classes ────────────────────────────────────────────────────── */
+.section {
+  @apply py-24 md:py-32 px-4;
+}
+
+.container {
+  @apply max-w-6xl mx-auto px-4;
+}
+
+.heading-xl {
+  @apply text-5xl md:text-7xl lg:text-8xl font-bold leading-none tracking-tight;
+}
+
+.heading-lg {
+  @apply text-3xl md:text-5xl font-bold leading-tight tracking-tight;
 }
