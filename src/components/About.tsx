@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useGSAP, gsap } from "@/hooks/useGSAP";
 import { fadeUp } from "@/lib/gsap";
 import TextReveal from "@/components/TextReveal";
+import GiantText from "@/components/GiantText";
 
 const SKILLS = [
   {
@@ -97,6 +98,16 @@ export default function About() {
       aria-labelledby="about-heading"
       className="section relative overflow-hidden"
     >
+      {/* Ambient giant text — scrolls at slower rate, creates editorial depth */}
+      <GiantText
+        yPercent={[8, -8]}
+        scrollStart="top bottom"
+        scrollEnd="bottom top"
+        style={{ fontSize: "clamp(6rem, 22vw, 18rem)" }}
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-white/3 z-0"
+      >
+        ABOUT
+      </GiantText>
       {/* Living gradient background — parallax-slow: recedes as section scrolls */}
       <div
         ref={bgRef}

@@ -4,270 +4,165 @@ import { useRef } from "react";
 import { useGSAP, gsap } from "@/hooks/useGSAP";
 
 const PROJECTS = [
-  {
-    title: "Orbital",
-    description:
-      "A real-time collaborative whiteboard with physics-based animations and multiplayer cursors.",
-    tags: ["Next.js", "WebSockets", "Canvas API", "GSAP"],
-    year: "2026",
-    size: "large",
-  },
-  {
-    title: "Prism",
-    description:
-      "Design system and component library built for motion-first interfaces.",
-    tags: ["React", "TypeScript", "Storybook"],
-    year: "2025",
-    size: "small",
-  },
-  {
-    title: "Void",
-    description:
-      "Generative art platform turning on-chain data into interactive 3D sculptures.",
-    tags: ["Three.js", "React Three Fiber", "Solidity"],
-    year: "2025",
-    size: "small",
-  },
-  {
-    title: "Cascade",
-    description:
-      "High-performance e-commerce storefront with sub-second page transitions.",
-    tags: ["Next.js", "Shopify", "Tailwind CSS"],
-    year: "2024",
-    size: "small",
-  },
-  {
-    title: "Lumina",
-    description:
-      "AI-powered creative assistant that turns text prompts into animated scenes.",
-    tags: ["Python", "WebGL", "GSAP", "OpenAI"],
-    year: "2024",
-    size: "small",
-  },
+  { title: "Orbital",  subtitle: "Real-time collaborative whiteboard",    year: "2026", color: "#7c3aed", tags: ["Next.js",  "WebSockets",      "GSAP"]        },
+  { title: "Prism",    subtitle: "Design system for motion interfaces",    year: "2025", color: "#06b6d4", tags: ["React",    "TypeScript",      "Storybook"]   },
+  { title: "Void",     subtitle: "Generative art platform",                year: "2025", color: "#a21caf", tags: ["Three.js", "React Three Fiber","Solidity"]   },
+  { title: "Cascade",  subtitle: "E-commerce with sub-second transitions", year: "2024", color: "#f472b6", tags: ["Next.js",  "Shopify",         "Tailwind CSS"] },
 ];
-
-// ─── Card ─────────────────────────────────────────────────────────────────────
-
-function ProjectCard({
-  project,
-  className = "",
-}: {
-  project: (typeof PROJECTS)[number];
-  className?: string;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const rafPending = useRef(false);
-
-  const handleMouseEnter = () => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    gsap.to(cardRef.current, {
-      boxShadow: "0 0 40px 4px rgba(124,58,237,0.25), 0 20px 60px rgba(0,0,0,0.5)",
-      duration: 0.3,
-      ease: "power2.out",
-      overwrite: "auto",
-    });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const card = cardRef.current;
-    if (!card || rafPending.current) return;
-    rafPending.current = true;
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-    requestAnimationFrame(() => {
-      rafPending.current = false;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      const { left, top, width, height } = card.getBoundingClientRect();
-      const x = clientX - left;
-      const y = clientY - top;
-      const rotateX = (y / height - 0.5) * 10;
-      const rotateY = (x / width - 0.5) * -10;
-      gsap.to(card, {
-        rotateX,
-        rotateY,
-        scale: 1.03,
-        duration: 0.4,
-        ease: "power2.out",
-        overwrite: "auto",
-      });
-    });
-  };
-
-  const handleMouseLeave = () => {
-    gsap.to(cardRef.current, {
-      rotateX: 0,
-      rotateY: 0,
-      scale: 1,
-      boxShadow: "0 0 0px 0px rgba(124,58,237,0), 0 0px 0px rgba(0,0,0,0)",
-      duration: 0.6,
-      ease: "power3.out",
-      overwrite: "auto",
-    });
-  };
-
-  return (
-    <div
-      style={{ perspective: "800px" }}
-      className={className}
-    >
-      <article
-        ref={cardRef}
-        onMouseEnter={handleMouseEnter}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        aria-label={project.title}
-        className="project-card group h-full rounded-2xl border border-white/10 bg-white/3 p-8 flex flex-col justify-between"
-        style={{ transformStyle: "preserve-3d" }}
-      >
-        {/* Header */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-violet-400 text-xs font-medium tracking-[0.2em] uppercase">
-              {project.year}
-            </span>
-            <span aria-hidden="true" className="text-white/20 text-sm">
-              {String(PROJECTS.indexOf(project) + 1).padStart(2, "0")}
-            </span>
-          </div>
-          <h3 className="heading-lg text-white mb-3 group-hover:text-violet-300 transition-colors duration-300">
-            {project.title}
-          </h3>
-          <p className="text-white/50 text-sm leading-relaxed">
-            {project.description}
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 flex items-end justify-between">
-          <div className="flex flex-wrap gap-2">
-            {project.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-2.5 py-1 rounded-full border border-white/10 text-white/50 text-xs"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            aria-hidden="true"
-            className="text-white/20 group-hover:text-violet-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 shrink-0 ml-4"
-          >
-            <path
-              d="M4 16L16 4M16 4H8M16 4V12"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </article>
-    </div>
-  );
-}
-
-// ─── Section ──────────────────────────────────────────────────────────────────
 
 export default function Work() {
   const sectionRef = useRef<HTMLElement>(null);
+  const trackRef   = useRef<HTMLDivElement>(null);
+  const hoverRefs  = useRef<(HTMLDivElement | null)[]>([]);
 
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: "+=200%",
-            scrub: true,
-            pin: true,
-            anticipatePin: 1,
-          },
-        });
-
-        // Header fades in first
-        tl.from([".work-label", ".work-heading"], {
-          y: 24,
-          autoAlpha: 0,
-          duration: 0.2,
-          stagger: 0.08,
-        })
-          // Cards stagger in: scale up from 0.8, rise from y:100
-          .from(
-            ".project-card",
-            {
-              opacity: 0,
-              y: 100,
-              scale: 0.8,
-              stagger: 0.3,
-              duration: 0.5,
-              ease: "power3.out",
-              transformOrigin: "center bottom",
-            },
-            "-=0.05"
-          )
-          // Parallax drift: cards float upward as scroll continues
-          .to(
-            ".project-card",
-            {
-              y: -30,
-              stagger: 0.08,
-              duration: 0.4,
-              ease: "none",
-            },
-            ">"
-          );
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      // Build a timeline that just slides the track — one beat per project.
+      // Text is always visible; no from-tweens that hide content on load.
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "+=400%",
+          scrub: 1,
+          pin: true,
+          anticipatePin: 1,
+        },
       });
 
-      mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set([".project-card", ".work-label", ".work-heading"], {
-          clearProps: "all",
-        });
-      });
+      // Hold on slide 0 for a moment, then slide to each subsequent project.
+      tl.to({}, { duration: 1 }); // hold on first slide
 
-      return () => mm.revert();
-    },
-    { scope: sectionRef }
-  );
+      for (let i = 1; i < PROJECTS.length; i++) {
+        tl.to(trackRef.current, {
+          x: () => -(i * window.innerWidth),
+          duration: 1,
+          ease: "power4.inOut",
+          invalidateOnRefresh: true,
+        }).to({}, { duration: 1 }); // hold on each slide
+      }
+    });
 
-  const [large, ...rest] = PROJECTS;
+    return () => mm.revert();
+  }, { scope: sectionRef });
+
+  const onMove = (i: number) => (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = hoverRefs.current[i];
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    gsap.to(el, {
+      rotateX: ((e.clientY - r.top)  / r.height - 0.5) *  8,
+      rotateY: ((e.clientX - r.left) / r.width  - 0.5) * -8,
+      scale: 1.03,
+      duration: 0.5, ease: "power3.out", overwrite: "auto",
+    });
+  };
+
+  const onLeave = (i: number) => () => {
+    const el = hoverRefs.current[i];
+    if (!el) return;
+    gsap.to(el, { rotateX: 0, rotateY: 0, scale: 1, duration: 0.7, ease: "power4.out", overwrite: "auto" });
+  };
 
   return (
-    <section id="work" ref={sectionRef} className="work-section section">
-      <div className="container">
-        {/* Header */}
-        <div className="mb-14 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <p className="work-label text-violet-400 text-sm font-medium tracking-[0.2em] uppercase mb-3">
-              Selected work
-            </p>
-            <h2 className="work-heading heading-lg text-white">
-              Things I&apos;ve built
-            </h2>
-          </div>
-          <p className="text-white/50 text-sm leading-relaxed">A curated selection of projects spanning product, craft, and
-            experimentation.
-          </p>
-        </div>
+    <section
+      id="work"
+      ref={sectionRef}
+      aria-label="Selected work"
+      className="relative h-screen overflow-hidden bg-[#0a0a0a]"
+    >
+      {/* label */}
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none select-none">
+        <p className="text-white/25 text-xs tracking-[0.4em] uppercase font-medium text-center">
+          Selected Work
+        </p>
+      </div>
 
-        {/* Asymmetric layout: large left + 2×2 right */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-          {/* Large card */}
-          <ProjectCard project={large} className="lg:col-span-3 lg:row-span-2" />
+      {/* scrolling track — clipped so off-screen slides are invisible */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          ref={trackRef}
+          className="flex h-full will-change-transform"
+          style={{ width: (PROJECTS.length * 100) + "vw" }}
+        >
+          {PROJECTS.map((proj, i) => (
+            <div
+              key={proj.title}
+              className="relative flex-none h-full flex items-center justify-center"
+              style={{ width: "100vw" }}
+            >
+              {/* per-slide ambient glow */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: "radial-gradient(ellipse 70% 60% at 60% 50%," + proj.color + "14 0%,transparent 70%)" }}
+              />
 
-          {/* Four smaller cards */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-5">
-            {rest.map((p) => (
-              <ProjectCard key={p.title} project={p} />
-            ))}
-          </div>
+              {/* giant index number */}
+              <span
+                aria-hidden="true"
+                className="absolute left-8 bottom-8 font-black text-white/5 select-none pointer-events-none leading-none"
+                style={{ fontSize: "clamp(9rem,28vw,24rem)" }}
+              >
+                {String(i + 1).padStart(2, "0")}
+              </span>
+
+              {/* tilt card */}
+              <div
+                ref={(el) => { hoverRefs.current[i] = el; }}
+                className="relative z-10 flex flex-col md:flex-row items-center gap-12 md:gap-24 px-10 md:px-20 max-w-6xl w-full"
+                style={{ transformStyle: "preserve-3d", perspective: "1200px" }}
+                onMouseMove={onMove(i)}
+                onMouseLeave={onLeave(i)}
+              >
+                {/* left: editorial text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/30 text-xs font-medium tracking-[0.35em] uppercase mb-5">
+                    {proj.year}
+                  </p>
+                  <h2
+                    className="font-extrabold leading-none text-white/90 mb-5"
+                    style={{ fontSize: "clamp(2.8rem,7vw,6.5rem)", letterSpacing: "-0.04em" }}
+                  >
+                    {proj.title}
+                  </h2>
+                  <p className="text-white/50 text-lg md:text-xl font-medium mb-8">
+                    {proj.subtitle}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {proj.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-3 py-1 rounded-full border text-xs font-medium"
+                        style={{ borderColor: proj.color + "50", color: proj.color + "cc" }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div
+                    className="mt-10 h-px w-20 rounded-full"
+                    style={{ background: "linear-gradient(to right," + proj.color + ",transparent)" }}
+                  />
+                </div>
+
+                {/* right: cinematic preview */}
+                <div
+                  className="flex-none w-full md:w-[45%] aspect-video rounded-2xl overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg," + proj.color + "20 0%,#111 100%)",
+                    boxShadow: "0 24px 80px 0 " + proj.color + "28",
+                  }}
+                >
+                  <div
+                    className="w-full h-full"
+                    style={{ background: "radial-gradient(ellipse at 40% 40%," + proj.color + "25 0%,transparent 70%)" }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
