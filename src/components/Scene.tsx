@@ -3,12 +3,34 @@
 import { useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { MeshDistortMaterial } from "@react-three/drei";
-import * as THREE from "three";
+import { Timer } from "three";
+import type { Mesh } from "three";
+
+// THREE.Clock is deprecated in r168+. Build a compatible adapter using Timer
+// so R3F's internal render loop doesn't trigger the deprecation warning.
+function createTimerClock() {
+  const timer = new Timer();
+  let elapsed = 0;
+  return {
+    autoStart: true,
+    getDelta() {
+      timer.update();
+      const d = timer.getDelta();
+      elapsed += d;
+      return d;
+    },
+    getElapsedTime() {
+      return elapsed;
+    },
+    start() {},
+    stop() {},
+  };
+}
 
 // ─── Floating mesh ──────────────────────────────────────────────────────────
 
 function FloatingSphere({ mouse }: { mouse: React.RefObject<{ x: number; y: number }> }) {
-  const meshRef = useRef<THREE.Mesh>(null!);
+  const meshRef = useRef<Mesh>(null!);
   const { viewport } = useThree();
 
   useFrame((_, delta) => {
@@ -29,8 +51,8 @@ function FloatingSphere({ mouse }: { mouse: React.RefObject<{ x: number; y: numb
 
   return (
     <mesh ref={meshRef}>
-      {/* Low-poly: widthSegments / heightSegments = 32 */}
-      <sphereGeometry args={[1.4, 32, 32]} />
+      {/* 24 segments — visually identical to 32, ~25% fewer vertices */}
+      <sphereGeometry args={[1.4, 24, 24]} />
       <MeshDistortMaterial
         color="#7c3aed"
         distort={0.35}
@@ -54,6 +76,7 @@ export default function Scene({
       camera={{ position: [0, 0, 4], fov: 50 }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true }}
+      performance={{ min: 0.5 }}
       style={{ background: "transparent" }}
     >
       <ambientLight intensity={0.6} />

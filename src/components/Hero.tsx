@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP, gsap } from "@/hooks/useGSAP";
 import dynamic from "next/dynamic";
+import MagneticButton from "@/components/MagneticButton";
 
 // Load the Canvas-based scene only on the client (no SSR)
 const Scene = dynamic(() => import("@/components/Scene"), { ssr: false });
@@ -13,11 +14,15 @@ export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const overlineRef = useRef<HTMLParagraphElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
   const sceneWrapRef = useRef<HTMLDivElement>(null);
 
   // Shared mouse position for both parallax and 3D scene
   const mouse = useRef({ x: 0, y: 0 });
+  // RAF guard — prevent firing GSAP tweens faster than the screen refresh rate
+  const rafPending = useRef(false);
 
   // ── Mouse move: parallax text + feed to Scene ──────────────────────────
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
@@ -26,25 +31,33 @@ export default function Hero() {
     mouse.current.x = (clientX / width) * 2 - 1;
     mouse.current.y = -((clientY / height) * 2 - 1);
 
-    // Subtle parallax on headline
-    if (headlineRef.current) {
-      gsap.to(headlineRef.current, {
-        x: mouse.current.x * 12,
-        y: mouse.current.y * 6,
-        duration: 1,
-        ease: "power2.out",
-        overwrite: "auto",
-      });
-    }
-    if (subtitleRef.current) {
-      gsap.to(subtitleRef.current, {
-        x: mouse.current.x * 6,
-        y: mouse.current.y * 3,
-        duration: 1.2,
-        ease: "power2.out",
-        overwrite: "auto",
-      });
-    }
+    if (rafPending.current) return;
+    rafPending.current = true;
+
+    requestAnimationFrame(() => {
+      rafPending.current = false;
+      // Skip animation when user prefers reduced motion
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      // Subtle parallax on headline
+      if (headlineRef.current) {
+        gsap.to(headlineRef.current, {
+          x: mouse.current.x * 12,
+          y: mouse.current.y * 6,
+          duration: 1,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+      }
+      if (subtitleRef.current) {
+        gsap.to(subtitleRef.current, {
+          x: mouse.current.x * 6,
+          y: mouse.current.y * 3,
+          duration: 1.2,
+          ease: "power2.out",
+          overwrite: "auto",
+        });
+      }
+    });
   };
 
   // ── GSAP entrance animations ───────────────────────────────────────────
@@ -56,30 +69,39 @@ export default function Hero() {
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-        // Headline lines: clip-path reveal + upward motion
-        const lines =
-          headlineRef.current?.querySelectorAll(".hero-line") ?? [];
+        const lines = headlineRef.current?.querySelectorAll(".hero-line") ?? [];
 
-        tl.from(lines, {
-          y: "110%",
-          autoAlpha: 0,
-          duration: 1,
-          stagger: 0.12,
-        })
+        // 3D scene breathes in behind everything from the very start
+        tl.from(
+          sceneWrapRef.current,
+          { autoAlpha: 0, scale: 0.95, duration: 1.8, ease: "power2.out" },
+          0
+        )
+          // Overline fades up
+          .from(overlineRef.current, { y: 20, autoAlpha: 0, duration: 0.7 }, 0.2)
+          // Headline lines: per-line clip reveal + upward motion
+          .from(
+            lines,
+            { y: 100, autoAlpha: 0, duration: 1, stagger: 0.15 },
+            0.5
+          )
+          // Subtitle follows last headline line
           .from(
             subtitleRef.current,
-            { y: 24, autoAlpha: 0, duration: 0.8 },
+            { y: 28, autoAlpha: 0, duration: 0.8 },
+            "-=0.4"
+          )
+          // CTA buttons stagger in
+          .from(
+            ctaRef.current?.querySelectorAll("a") ?? [],
+            { y: 20, autoAlpha: 0, duration: 0.6, stagger: 0.1 },
             "-=0.5"
           )
+          // Scroll hint drifts in last
           .from(
             scrollHintRef.current,
             { y: 16, autoAlpha: 0, duration: 0.6 },
             "-=0.4"
-          )
-          .from(
-            sceneWrapRef.current,
-            { autoAlpha: 0, scale: 0.9, duration: 1.2, ease: "power2.out" },
-            "-=1.2"
           );
       });
 
@@ -87,7 +109,9 @@ export default function Hero() {
         gsap.set(
           [
             headlineRef.current?.querySelectorAll(".hero-line"),
+            overlineRef.current,
             subtitleRef.current,
+            ctaRef.current?.querySelectorAll("a"),
             scrollHintRef.current,
             sceneWrapRef.current,
           ],
@@ -105,12 +129,13 @@ export default function Hero() {
       id="home"
       ref={sectionRef}
       onMouseMove={handleMouseMove}
+      aria-labelledby="hero-heading"
       className="relative min-h-screen flex items-center overflow-hidden"
     >
-      {/* 3D background canvas */}
+      {/* 3D background canvas — parallax-slow: drifts down as user scrolls past */}
       <div
         ref={sceneWrapRef}
-        className="absolute inset-0 pointer-events-none"
+        className="parallax-slow absolute inset-0 pointer-events-none"
         aria-hidden="true"
       >
         {/* Overlay so text stays readable */}
@@ -122,23 +147,31 @@ export default function Hero() {
       <div className="container relative z-20">
         <div className="max-w-3xl">
           {/* Overline */}
-          <p className="text-violet-400 text-sm font-medium tracking-[0.2em] uppercase mb-6">
+          <p ref={overlineRef} className="text-violet-400 text-sm font-medium tracking-[0.2em] uppercase mb-6">
             Full-stack developer &amp; creative coder
           </p>
 
           {/* Headline — each line is clipped independently for the reveal */}
           <h1
+            id="hero-heading"
             ref={headlineRef}
-            className="heading-xl text-white mb-6 overflow-hidden"
+            className="heading-xl text-white mb-6"
           >
-            <span className="hero-line block">Crafting</span>
-            <span className="hero-line block">
-              digital&nbsp;
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-violet-400 to-cyan-400">
-                experiences
+            {/* Each line is clipped independently so the reveal is per-line */}
+            <span className="block overflow-hidden">
+              <span className="hero-line block">Crafting</span>
+            </span>
+            <span className="block overflow-hidden">
+              <span className="hero-line block">
+                digital&nbsp;
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-violet-400 to-cyan-400">
+                  experiences
+                </span>
               </span>
             </span>
-            <span className="hero-line block">that matter.</span>
+            <span className="block overflow-hidden">
+              <span className="hero-line block">that matter.</span>
+            </span>
           </h1>
 
           {/* Subtitle */}
@@ -151,19 +184,19 @@ export default function Hero() {
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center gap-4">
-            <a
+          <div ref={ctaRef} className="flex items-center gap-4">
+            <MagneticButton
               href="#work"
               className="px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors duration-300"
             >
               View Work
-            </a>
-            <a
+            </MagneticButton>
+            <MagneticButton
               href="#contact"
               className="px-6 py-3 rounded-full border border-white/20 hover:border-white/50 text-white/70 hover:text-white text-sm font-medium transition-colors duration-300"
             >
               Get in Touch
-            </a>
+            </MagneticButton>
           </div>
         </div>
       </div>
@@ -171,6 +204,7 @@ export default function Hero() {
       {/* Scroll indicator */}
       <div
         ref={scrollHintRef}
+        aria-hidden="true"
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/40 text-xs tracking-widest uppercase"
       >
         <span>Scroll</span>
