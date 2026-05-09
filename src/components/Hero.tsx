@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { useGSAP, gsap } from "@/hooks/useGSAP";
+import { useGSAP, gsap, ScrollTrigger } from "@/hooks/useGSAP";
 import dynamic from "next/dynamic";
 import MagneticButton from "@/components/MagneticButton";
 
@@ -23,6 +23,8 @@ export default function Hero() {
   const mouse = useRef({ x: 0, y: 0 });
   // RAF guard — prevent firing GSAP tweens faster than the screen refresh rate
   const rafPending = useRef(false);
+  // Scroll progress (0–1) fed to Scene for camera + lighting control
+  const scrollProgress = useRef<number>(0);
 
   // ── Mouse move: parallax text + feed to Scene ──────────────────────────
   const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
@@ -103,6 +105,50 @@ export default function Hero() {
             { y: 16, autoAlpha: 0, duration: 0.6 },
             "-=0.4"
           );
+
+        // ── Cinematic pin: scroll controls camera for 2.5× viewport height ──
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "+=250%",
+          pin: true,
+          pinSpacing: true,
+          scrub: 1,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            scrollProgress.current = self.progress;
+          },
+        });
+
+        // Giant text breathes outward as camera pulls back
+        gsap.fromTo(
+          ".hero-giant-text",
+          { scale: 1, yPercent: 0 },
+          {
+            scale: 1.7,
+            yPercent: -5,
+            ease: "none",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top top",
+              end: "+=250%",
+              scrub: 1,
+            },
+          }
+        );
+
+        // UI content retreats as user enters the 3D world
+        gsap.to(".hero-content", {
+          yPercent: -10,
+          autoAlpha: 0,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "+=100%",
+            scrub: 1,
+          },
+        });
       });
 
       mm.add("(prefers-reduced-motion: reduce)", () => {
@@ -132,19 +178,32 @@ export default function Hero() {
       aria-labelledby="hero-heading"
       className="relative min-h-screen flex items-center overflow-hidden"
     >
-      {/* 3D background canvas — parallax-slow: drifts down as user scrolls past */}
+      {/* 3D background canvas */}
       <div
         ref={sceneWrapRef}
-        className="parallax-slow absolute inset-0 pointer-events-none"
+        className="absolute inset-0 z-0 pointer-events-none"
         aria-hidden="true"
       >
-        {/* Overlay so text stays readable */}
-        <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-10" />
-        <Scene mouse={mouse} />
+        {/* Gradient overlay keeps text readable against the 3D scene */}
+        <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a] via-[#0a0a0a]/75 to-transparent z-10" />
+        <Scene mouse={mouse} scrollProgress={scrollProgress} />
       </div>
 
-      {/* Content */}
-      <div className="container relative z-20">
+      {/* Giant background text — drifts independently during scroll */}
+      <div
+        className="hero-giant-text absolute inset-0 z-10 flex items-center justify-center pointer-events-none select-none overflow-hidden"
+        aria-hidden="true"
+      >
+        <span
+          className="text-white font-extrabold leading-none tracking-tighter"
+          style={{ fontSize: "clamp(8rem, 28vw, 24rem)", opacity: 0.04 }}
+        >
+          MOTION
+        </span>
+      </div>
+
+      {/* Content — fades as camera enters the 3D world */}
+      <div className="hero-content container relative z-20">
         <div className="max-w-3xl">
           {/* Overline */}
           <p ref={overlineRef} className="text-violet-400 text-sm font-medium tracking-[0.2em] uppercase mb-6">
@@ -201,11 +260,11 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator — also retreats with hero content */}
       <div
         ref={scrollHintRef}
         aria-hidden="true"
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/40 text-xs tracking-widest uppercase"
+        className="hero-content absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/40 text-xs tracking-widest uppercase"
       >
         <span>Scroll</span>
         {/* Animated line */}

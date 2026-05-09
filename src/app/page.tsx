@@ -1,33 +1,27 @@
 import dynamic from "next/dynamic";
 import Hero from "@/components/Hero";
-import ParallaxLayerClient from "@/components/ParallaxLayerClient";
 
-// Below-fold sections: dynamically imported so their JS is only fetched
-// after the initial page paint. Hero is kept eager (above the fold).
-const Work = dynamic(() => import("@/components/Work"));
-const About = dynamic(() => import("@/components/About"));
-const Services = dynamic(() => import("@/components/Services"));
-const Lab = dynamic(() => import("@/components/Lab"));
-const Contact = dynamic(() => import("@/components/Contact"));
-
+const IdentitySequence   = dynamic(() => import("@/components/IdentitySequence"));
+const CapabilityShowcase = dynamic(() => import("@/components/CapabilityShowcase"));
+const InteractiveArchive = dynamic(() => import("@/components/InteractiveArchive"));
+const VisionStatement    = dynamic(() => import("@/components/VisionStatement"));
+const ContactExperience  = dynamic(() => import("@/components/ContactExperience"));
 
 export default function Home() {
   return (
-    <main className="relative">
-      {/* Page-level parallax: drives .parallax-slow / .parallax-fast across all sections */}
-      <ParallaxLayerClient />
-      {/* 1. Hook — cinematic full-screen intro */}
+    <main className="relative bg-[#0a0a0a]">
+      {/* 1. Hero World — cinematic 3D entry */}
       <Hero />
-      {/* 2. Proof — show the work immediately */}
-      <Work />
-      {/* 3. Story — who is behind the work */}
-      <About />
-      {/* 4. Offer — what I can do for you */}
-      <Services />
-      {/* 5. Play — experimental side */}
-      <Lab />
-      {/* 6. CTA — let's connect */}
-      <Contact />
+      {/* 2. Identity Sequence — who I am, told as cinematic scenes */}
+      <IdentitySequence />
+      {/* 3. Capability Showcase — what I build, not how I categorise it */}
+      <CapabilityShowcase />
+      {/* 4. Interactive Archive — floating experimental space */}
+      <InteractiveArchive />
+      {/* 5. Vision Statement — one massive editorial statement */}
+      <VisionStatement />
+      {/* 6. Final Contact Experience — cinematic outro */}
+      <ContactExperience />
     </main>
   );
 }

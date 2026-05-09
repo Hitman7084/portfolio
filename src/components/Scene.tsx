@@ -3,55 +3,105 @@
 import { useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { MeshDistortMaterial } from "@react-three/drei";
-import { Timer } from "three";
-import type { Mesh } from "three";
+import type { Mesh, DirectionalLight } from "three";
 
-// THREE.Clock is deprecated in r168+. Build a compatible adapter using Timer
-// so R3F's internal render loop doesn't trigger the deprecation warning.
-function createTimerClock() {
-  const timer = new Timer();
-  let elapsed = 0;
-  return {
-    autoStart: true,
-    getDelta() {
-      timer.update();
-      const d = timer.getDelta();
-      elapsed += d;
-      return d;
-    },
-    getElapsedTime() {
-      return elapsed;
-    },
-    start() {},
-    stop() {},
-  };
+// ─── Cinematic Camera ────────────────────────────────────────────────────────
+// Reads scrollProgress (0-1) every frame and smoothly lerps the camera
+// through a three-phase journey: pull-back then arc left then rise.
+
+function CinematicCamera({
+  scrollProgress,
+}: {
+  scrollProgress: React.RefObject<number>;
+}) {
+  const { camera } = useThree();
+
+  useFrame(() => {
+    const p = scrollProgress.current ?? 0;
+
+    // Phase 1 (0→0.5): pull back + slow arc right
+    // Phase 2 (0.5→1): arc peaks + camera rises
+    const targetZ = 4 + p * 6;                      // 4 → 10
+    const targetX = Math.sin(p * Math.PI) * 2.5;    // 0 → 2.5 → 0 (arc)
+    const targetY = p * 1.5;                         // 0 → 1.5 (rise)
+
+    camera.position.x += (targetX - camera.position.x) * 0.05;
+    camera.position.y += (targetY - camera.position.y) * 0.05;
+    camera.position.z += (targetZ - camera.position.z) * 0.05;
+    camera.lookAt(0, 0, 0);
+  });
+
+  return null;
 }
 
-// ─── Floating mesh ──────────────────────────────────────────────────────────
+// ─── Dynamic Lights ──────────────────────────────────────────────────────────
+// Light position sweeps across the scene as the camera moves, creating
+// a living, breathing lighting environment.
 
-function FloatingSphere({ mouse }: { mouse: React.RefObject<{ x: number; y: number }> }) {
-  const meshRef = useRef<Mesh>(null!);
+function DynamicLights({
+  scrollProgress,
+}: {
+  scrollProgress: React.RefObject<number>;
+}) {
+  const dirRef = useRef<DirectionalLight>(null as unknown as DirectionalLight);
+
+  useFrame(() => {
+    if (dirRef.current == null) return;
+    const p = scrollProgress.current ?? 0;
+    // Key light sweeps from right (+3) to left (-3), following camera arc
+    dirRef.current.position.set(3 - p * 6, 5, 5 - p * 2);
+    dirRef.current.intensity = 1.2 + p * 0.8;
+  });
+
+  return (
+    <>
+      <ambientLight intensity={0.6} />
+      <directionalLight ref={dirRef} position={[3, 5, 5]} intensity={1.2} />
+      <directionalLight position={[-3, -2, -3]} intensity={0.3} color="#a78bfa" />
+    </>
+  );
+}
+
+// ─── Floating Sphere ─────────────────────────────────────────────────────────
+// Self-rotates and follows the cursor. Rotation speed increases with scroll
+// progress, giving the impression of momentum building.
+
+function FloatingSphere({
+  mouse,
+  scrollProgress,
+}: {
+  mouse: React.RefObject<{ x: number; y: number }>;
+  scrollProgress: React.RefObject<number>;
+}) {
+  const meshRef = useRef<Mesh>(null as unknown as Mesh);
   const { viewport } = useThree();
 
-  useFrame((_, delta) => {
-    if (!meshRef.current) return;
+  useFrame((state, delta) => {
+    if (meshRef.current == null) return;
+    const p = scrollProgress.current ?? 0;
 
-    // Slow self-rotation
+    // Self-rotation — accelerates with scroll momentum
     meshRef.current.rotation.x += delta * 0.15;
-    meshRef.current.rotation.y += delta * 0.25;
+    meshRef.current.rotation.y += delta * (0.2 + p * 0.6);
 
-    // Soft cursor follow
+    // Vertical float — smooth sine bob
+    const bob = Math.sin(state.clock.elapsedTime * 0.6) * 0.15;
+    meshRef.current.position.y += (bob - meshRef.current.position.y) * 0.04;
+
+    // Horizontal cursor follow
     const targetX = (mouse.current.x * viewport.width) / 2;
-    const targetY = (mouse.current.y * viewport.height) / 2;
     meshRef.current.position.x +=
       (targetX * 0.18 - meshRef.current.position.x) * 0.05;
-    meshRef.current.position.y +=
-      (targetY * 0.18 - meshRef.current.position.y) * 0.05;
+
+    // Scale grows slightly as camera pulls back — keeps sphere visually prominent
+    const targetScale = 1 + p * 0.5;
+    meshRef.current.scale.setScalar(
+      meshRef.current.scale.x + (targetScale - meshRef.current.scale.x) * 0.04
+    );
   });
 
   return (
     <mesh ref={meshRef}>
-      {/* 24 segments — visually identical to 32, ~25% fewer vertices */}
       <sphereGeometry args={[1.4, 24, 24]} />
       <MeshDistortMaterial
         color="#7c3aed"
@@ -64,12 +114,14 @@ function FloatingSphere({ mouse }: { mouse: React.RefObject<{ x: number; y: numb
   );
 }
 
-// ─── Scene ──────────────────────────────────────────────────────────────────
+// ─── Scene ───────────────────────────────────────────────────────────────────
 
 export default function Scene({
   mouse,
+  scrollProgress,
 }: {
   mouse: React.RefObject<{ x: number; y: number }>;
+  scrollProgress: React.RefObject<number>;
 }) {
   return (
     <Canvas
@@ -79,10 +131,9 @@ export default function Scene({
       performance={{ min: 0.5 }}
       style={{ background: "transparent" }}
     >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[3, 5, 5]} intensity={1.2} />
-      <directionalLight position={[-3, -2, -3]} intensity={0.3} color="#a78bfa" />
-      <FloatingSphere mouse={mouse} />
+      <CinematicCamera scrollProgress={scrollProgress} />
+      <DynamicLights scrollProgress={scrollProgress} />
+      <FloatingSphere mouse={mouse} scrollProgress={scrollProgress} />
     </Canvas>
   );
 }

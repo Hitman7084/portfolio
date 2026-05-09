@@ -4,10 +4,10 @@ import { useRef, useState } from "react";
 import { useGSAP, gsap } from "@/hooks/useGSAP";
 
 const NAV_LINKS = [
-  { label: "Home", href: "#home" },
-  { label: "Work", href: "#work" },
-  { label: "Lab", href: "#lab" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home",    href: "#home"     },
+  { label: "Work",    href: "#showcase" },
+  { label: "Archive", href: "#archive"  },
+  { label: "Contact", href: "#contact"  },
 ];
 
 export default function Navbar() {
