@@ -24,6 +24,34 @@ body {
   color: #ffffff;
 }
 
+/* ─── Keyboard focus ring ───────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ─── Skip-to-content link ──────────────────────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 1rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.skip-link:focus-visible {
+  left: 1rem;
+  z-index: 99999;
+  background: #7c3aed;
+  color: #ffffff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
 /* ─── Grain / noise overlay ─────────────────────────────────────────────── */
 body::after {
   content: "";
@@ -40,6 +68,9 @@ body::after {
 /* ─── Utility classes ────────────────────────────────────────────────────── */
 .section {
   @apply py-24 md:py-32 px-4;
+  /* Skip rendering/layout of off-screen sections — huge perf win on long pages */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 600px;
 }
 
 .container {

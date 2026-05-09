@@ -38,7 +38,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
+    <nav ref={navRef} aria-label="Primary navigation" className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
       {/* Main bar */}
       <div className="max-w-6xl mx-auto flex items-center justify-between backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl px-6 py-3">
         {/* Logo */}
@@ -51,7 +51,7 @@ export default function Navbar() {
         </a>
 
         {/* Desktop links */}
-        <ul className="hidden md:flex items-center gap-8">
+        <ul role="list" className="hidden md:flex items-center gap-8">
           {NAV_LINKS.map(({ label, href }) => (
             <li key={label}>
               <a
@@ -70,8 +70,9 @@ export default function Navbar() {
         <button
           className="md:hidden flex flex-col gap-1.5 p-1 cursor-pointer"
           onClick={() => setMenuOpen((prev) => !prev)}
-          aria-label="Toggle menu"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
         >
           <span
             className={`block h-0.5 w-6 bg-white origin-center transition-transform duration-300 ${
@@ -93,11 +94,13 @@ export default function Navbar() {
 
       {/* Mobile dropdown */}
       <div
+        id="mobile-menu"
+        aria-hidden={!menuOpen}
         className={`md:hidden overflow-hidden transition-all duration-300 ${
           menuOpen ? "max-h-64 opacity-100 mt-2" : "max-h-0 opacity-0"
         }`}
       >
-        <ul className="backdrop-blur-md bg-[#0a0a0a]/90 border border-white/10 rounded-2xl px-6 py-4 flex flex-col gap-4">
+        <ul role="list" className="backdrop-blur-md bg-[#0a0a0a]/90 border border-white/10 rounded-2xl px-6 py-4 flex flex-col gap-4">
           {NAV_LINKS.map(({ label, href }) => (
             <li key={label}>
               <a
